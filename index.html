@@ -1,3 +1,75 @@
+# PythonAnywhere Deployment Guide
+
+I can see you're trying to deploy to PythonAnywhere but encountering issues. Let me help you fix this. The problem is that you're trying to deploy a client-side HTML/JS app using a Python WSGI configuration, which isn't necessary for this type of application.
+
+## Solution: Deploy as a Static Site
+
+Since your Travel Expense Tracker is a client-side application (HTML, CSS, JavaScript), you don't need Python/WSGI configuration. Here's how to fix it:
+
+### Step 1: Save the HTML file
+1. Right-click on this page and select "Save As"
+2. Save it as `index.html`
+
+### Step 2: Upload to PythonAnywhere
+1. Log in to your PythonAnywhere account
+2. Go to the **Files** tab
+3. Navigate to `/var/www/`
+4. Delete the current WSGI file: `maneeshrastogi_pythonanywhere_com_wsgi.py`
+5. Upload your `index.html` file to `/var/www/`
+
+### Step 3: Configure as Static Site
+1. Go to the **Web** tab in PythonAnywhere
+2. Scroll down to "Static files"
+3. Add a new static file mapping:
+   - URL: `/`
+   - Directory: `/var/www/`
+4. Remove any WSGI configuration (you don't need it for this app)
+5. Click "Reload" to apply changes
+
+## Alternative: Use the Correct WSGI Configuration
+
+If you prefer to use Python/Flask (though it's not necessary), here's the correct setup:
+
+### 1. Create a Flask app (`app.py`)
+```python
+from flask import Flask, send_file
+
+app = Flask(__name__)
+
+@app.route('/')
+def serve_html():
+    return send_file('index.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+### 2. Update your WSGI file
+Replace the content of `/var/www/maneeshrastogi_pythonanywhere_com_wsgi.py` with:
+
+```python
+import sys
+path = '/home/maneeshrastogi/mysite'
+if path not in sys.path:
+    sys.path.append(path)
+
+from app import app as application
+```
+
+### 3. Directory structure
+Make sure your files are organized like this:
+```
+/home/maneeshrastogi/
+└── mysite/
+    ├── app.py
+    └── index.html
+```
+
+## Complete HTML App (Save as index.html)
+
+Here's the complete HTML code for your Travel Expense Tracker:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,6 +112,33 @@
         h1 {
             font-size: 1.4rem;
             margin-bottom: 5px;
+        }
+        
+        .deploy-section {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px;
+        }
+        
+        .deploy-section h3 {
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+        
+        .deploy-steps {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .deploy-steps ol {
+            padding-left: 20px;
+        }
+        
+        .deploy-steps li {
+            margin-bottom: 10px;
         }
         
         .page {
@@ -173,23 +272,6 @@
         
         .history-purpose {
             color: #636e72;
-        }
-        
-        .expense-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 14px;
-        }
-        
-        .expense-table th, .expense-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        
-        .expense-table th {
-            background-color: #f2f2f2;
         }
         
         .notification {
@@ -693,7 +775,7 @@
                 return;
             }
             
-            filteredHistory.forEach((item, index) => {
+            filteredHistory.forEach((item, index) {
                 const historyElement = document.createElement('div');
                 historyElement.className = 'history-item';
                 historyElement.innerHTML = `
@@ -780,190 +862,126 @@
         }
         
         // Generate and download Excel file
-        function generateExcel() {
-            if (expenses.length === 0) {
-                alert('No expenses to export');
-                return;
-            }
-            
-            // Prepare data for Excel in the format matching the image
-            const excelData = [
-                // Header row
-                ['TRAVEL REIMBURSEMENT CLAIM FORM'],
-                [''],
-                ['Travel Claim Period / Month:', employeeDetails.claimPeriod || ''],
-                [''],
-                ['EMPLOYEE NAME', employeeDetails.name, 'EMPLOYEE EMAIL', employeeDetails.email],
-                ['ERP CODE', employeeDetails.erpCode, 'CADRE', employeeDetails.cadre],
-                ['DESIGNATION', employeeDetails.designation, 'DEPARTMENT', employeeDetails.department],
-                ['BASE LOCATION', employeeDetails.baseLocation, 'REPORTING MANAGER', employeeDetails.reportingManager],
-                ['MOBILE NO.', employeeDetails.mobileNo, 'REPORTING MANAGER EMAIL', employeeDetails.reportingManagerEmail],
-                ['APPROVED BY KP (Name)', employeeDetails.approvedBy, 'APPROVAL DATE', employeeDetails.approvalDate],
-                [''],
-                // Table header
-                ['Date of Travel', 'Purpose of Travel', 'Travel From', 'Travel To', 'Type of Claim', 'Days of Stay', 'Guest House', 'Hotel Charges', 'Family Policy', 'Food with Bills', 'Food without Bills', 'Flight Charges', 'Travel Mode', 'Location From', 'Location To', 'Distance (KM)', 'Amount Spent', 'Miscellaneous', 'Grand Total']
-            ];
-            
-            // Add expense rows
-            expenses.forEach(expense => {
-                excelData.push([
-                    expense.date,
-                    expense.purpose,
-                    expense.travelFrom,
-                    expense.travelTo,
-                    expense.claimType,
-                    expense.daysOfStay,
-                    expense.guestHouse,
-                    expense.hotelCharges,
-                    expense.familyPolicy,
-                    expense.foodWithBills,
-                    expense.foodWithoutBills,
-                    expense.flightCharges,
-                    expense.travelMode,
-                    expense.locationFrom,
-                    expense.locationTo,
-                    expense.distance,
-                    expense.amountSpent,
-                    expense.miscellaneous,
-                    expense.amount
-                ]);
-            });
-            
-            // Add total row
-            const totalAmount = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount || 0), 0);
-            excelData.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Total:', totalAmount.toFixed(2)]);
-            
-            // Create worksheet
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
-            
-            // Create workbook
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Travel Expenses');
-            
-            // Generate Excel file and trigger download
-            XLSX.writeFile(wb, 'travel_expenses.xlsx');
-            
-            // Save to history
-            saveToHistory(totalAmount);
-            
-            // Clear current expenses
-            expenses = [];
-            renderExpenses();
-            
-            showNotification('Excel file downloaded successfully! Data saved for 30 days.');
-        }
-        
-        // Save current claim to history with automatic 30-day cleanup
-        function saveToHistory(totalAmount) {
-            const historyItem = {
-                date: new Date().toISOString().split('T')[0],
-                claimPeriod: employeeDetails.claimPeriod,
-                employeeName: employeeDetails.name,
-                erpCode: employeeDetails.erpCode,
-                designation: employeeDetails.designation,
-                totalAmount: totalAmount,
-                expenses: [...expenses],
-                saveDate: new Date().toISOString()
-            };
-            
-            // Get existing history
-            const savedHistory = localStorage.getItem('expenseHistory');
-            let history = savedHistory ? JSON.parse(savedHistory) : [];
-            
-            // Add new item
-            history.push(historyItem);
-            
-            // Clean up old items (older than 30 days)
-            const now = new Date();
-            history = history.filter(item => {
-                const itemDate = new Date(item.saveDate);
-                const diffTime = Math.abs(now - itemDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                return diffDays <= 30;
-            });
-            
-            // Save back to localStorage
-            localStorage.setItem('expenseHistory', JSON.stringify(history));
-            
-            // Update employee details timestamp
-            employeeDetails.lastUpdated = new Date().toISOString();
-            localStorage.setItem('employeeDetails', JSON.stringify(employeeDetails));
-        }
-        
-        // Show notification
-        function showNotification(message) {
-            const notification = document.getElementById('notification');
-            const notificationText = document.getElementById('notificationText');
-            
-            notificationText.textContent = message;
-            notification.style.display = 'block';
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
-        
-        // Calculate grand total when any amount field changes
-        document.addEventListener('DOMContentLoaded', function() {
-            const amountFields = [
-                'hotelCharges', 'familyPolicy', 'foodWithBills', 
-                'foodWithoutBills', 'flightCharges', 'amountSpent', 
-                'miscellaneous'
-            ];
-            
-            amountFields.forEach(field => {
-                document.getElementById(field).addEventListener('input', calculateTotal);
-            });
-            
-            // Set today's date as default for travel date
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('travelDate').value = today;
-        });
-        
-        // Calculate the grand total
-        function calculateTotal() {
-            const hotelCharges = parseFloat(document.getElementById('hotelCharges').value) || 0;
-            const familyPolicy = parseFloat(document.getElementById('familyPolicy').value) || 0;
-            const foodWithBills = parseFloat(document.getElementById('foodWithBills').value) || 0;
-            const foodWithoutBills = parseFloat(document.getElementById('foodWithoutBills').value) || 0;
-            const flightCharges = parseFloat(document.getElementById('flightCharges').value) || 0;
-            const amountSpent = parseFloat(document.getElementById('amountSpent').value) || 0;
-            const miscellaneous = parseFloat(document.getElementById('miscellaneous').value) || 0;
-            
-            const total = hotelCharges + familyPolicy + foodWithBills + 
-                         foodWithoutBills + flightCharges + amountSpent + miscellaneous;
-            
-            document.getElementById('grandTotal').value = total.toFixed(2);
-        }
-        
-        // Initialize the app
-        window.onload = function() {
-            // Try to load saved employee details
-            const savedDetails = localStorage.getItem('employeeDetails');
-            if (savedDetails) {
-                employeeDetails = JSON.parse(savedDetails);
-                
-                // Check if data is older than 30 days
-                if (employeeDetails.lastUpdated) {
-                    const lastUpdated = new Date(employeeDetails.lastUpdated);
-                    const now = new Date();
-                    const diffTime = Math.abs(now - lastUpdated);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
-                    if (diffDays > 30) {
-                        if (confirm('Your saved data is older than 30 days. Would you like to clear it?')) {
-                            localStorage.removeItem('employeeDetails');
-                            localStorage.removeItem('expenseHistory');
-                            employeeDetails = {};
-                        }
-                    }
-                }
-                
-                updateProfileInfo();
-            }
-            
-            renderExpenses();
-        };
-    </script>
-</body>
-</html>
+function generateExcel() {
+    if (expenses.length === 0) {
+        alert('No expenses to export');
+        return;
+    }
+    
+    // Prepare data for Excel in the format matching the image
+    const excelData = [
+        // Header row
+        ['TRAVEL REIMBURSEMENT CLAIM FORM'],
+        [''],
+        ['Travel Claim Period / Month:', employeeDetails.claimPeriod || ''],
+        [''],
+        ['EMPLOYEE NAME', employeeDetails.name, 'EMPLOYEE EMAIL', employeeDetails.email],
+        ['ERP CODE', employeeDetails.erpCode, 'CADRE', employeeDetails.cadre],
+        ['DESIGNATION', employeeDetails.designation, 'DEPARTMENT', employeeDetails.department],
+        ['BASE LOCATION', employeeDetails.baseLocation, 'REPORTING MANAGER', employeeDetails.reportingManager],
+        ['MOBILE NO.', employeeDetails.mobileNo, 'REPORTING MANAGER EMAIL', employeeDetails.reportingManagerEmail],
+        ['APPROVED BY KP (Name)', employeeDetails.approvedBy, 'APPROVAL DATE', employeeDetails.approvalDate],
+        [''],
+        // Table header
+        ['Date of Travel', 'Purpose of Travel', 'Travel From', 'Travel To', 'Type of Claim', 'Days of Stay', 'Guest House', 'Hotel Charges', 'Family Policy', 'Food with Bills', 'Food without Bills', 'Flight Charges', 'Travel Mode', 'Location From', 'Location To', 'Distance (KM)', 'Amount Spent', 'Miscellaneous', 'Grand Total']
+    ];
+    
+    // Add expense rows
+    expenses.forEach(expense => {
+        excelData.push([
+            expense.date,
+            expense.purpose,
+            expense.travelFrom,
+            expense.travelTo,
+            expense.claimType,
+            expense.daysOfStay,
+            expense.guestHouse,
+            expense.hotelCharges,
+            expense.familyPolicy,
+            expense.foodWithBills,
+            expense.foodWithoutBills,
+            expense.flightCharges,
+            expense.travelMode,
+            expense.locationFrom,
+            expense.locationTo,
+            expense.distance,
+            expense.amountSpent,
+            expense.miscellaneous,
+            expense.amount
+        ]);
+    });
+    
+    // Add total row
+    const totalAmount = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount || 0), 0);
+    excelData.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Total:', totalAmount.toFixed(2)]);
+    
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
+    
+    // Set column widths
+    const colWidths = [
+        {wch: 15}, {wch: 20}, {wch: 15}, {wch: 15}, {wch: 15},
+        {wch: 12}, {wch: 12}, {wch: 15}, {wch: 15}, {wch: 15},
+        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 20}, {wch: 20},
+        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}
+    ];
+    ws['!cols'] = colWidths;
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Travel Claim");
+    
+    // Generate file name
+    const fileName = `Travel_Claim_${employeeDetails.name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    
+    // Save to file
+    XLSX.writeFile(wb, fileName);
+    
+    // Save to history
+    saveToHistory(totalAmount);
+    
+    showNotification('Excel file downloaded successfully!');
+}
+
+// Save current claim to history
+function saveToHistory(totalAmount) {
+    // Get existing history or initialize empty array
+    const existingHistory = localStorage.getItem('expenseHistory');
+    let history = existingHistory ? JSON.parse(existingHistory) : [];
+    
+    // Create history entry
+    const historyEntry = {
+        date: new Date().toISOString(),
+        employeeName: employeeDetails.name,
+        erpCode: employeeDetails.erpCode,
+        designation: employeeDetails.designation,
+        baseLocation: employeeDetails.baseLocation,
+        claimPeriod: employeeDetails.claimPeriod,
+        totalAmount: totalAmount,
+        expenses: expenses
+    };
+    
+    // Add to beginning of history array
+    history.unshift(historyEntry);
+    
+    // Keep only last 50 entries to prevent storage issues
+    if (history.length > 50) {
+        history = history.slice(0, 50);
+    }
+    
+    // Save back to localStorage
+    localStorage.setItem('expenseHistory', JSON.stringify(history));
+}
+
+// Show notification
+function showNotification(message) {
+    const notification = document.getElementById('notification');
+    const notificationText = document.getElementById('notificationText');
+    
+    notificationText.textContent = message;
+    notification.style.display = 'block';
+    
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 3000);
+}
