@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Claim Expense Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+            line-height: 1.6;
+            padding: 10px;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1a73e8, #6c5ce7);
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+        }
+        
+        .page {
+            display: none;
+            padding: 15px;
+        }
+        
+        .active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2d3436;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #1557b0;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .nav-buttons button {
+            flex: 1;
+        }
+        
+        .secondary-btn {
+            background: #636e72;
+        }
+        
+        .secondary-btn:hover {
+            background: #2d3436;
+        }
+        
+        .success-btn {
+            background: #00b894;
+        }
+        
+        .success-btn:hover {
+            background: #00a382;
+        }
+        
+        .profile-card {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .profile-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .profile-details {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+        
+        .profile-detail {
+            text-align: center;
+        }
+        
+        .detail-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        
+        .detail-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+        
+        .section-title {
+            background: #dfe6e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: 600;
+            color: #2d3436;
+        }
+        
+        .history-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #1a73e8;
+        }
+        
+        .history-date {
+            font-weight: 700;
+            color: #1a73e8;
+        }
+        
+        .history-purpose {
+            color: #636e72;
+        }
+        
+        .expense-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        .expense-table th, .expense-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .expense-table th {
+            background-color: #f2f2f2;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px;
+            background: #00b894;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 750px;
+            }
+            
+            .form-row {
+                display: flex;
+                gap: 15px;
+            }
+            
+            .form-row .form-group {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Travel Claim Expense Tracker</h1>
+            <p>Easily manage and track your business travel expenses</p>
+        </header>
+
+        <!-- Page 1: Employee Details -->
+        <div id="page1" class="page active">
+            <h2>Employee Information</h2>
+            <p>Please fill in your details below</p>
+            
+            <div class="form-group">
+                <label for="employeeName">EMPLOYEE NAME</label>
+                <input type="text" id="employeeName" placeholder="Enter your full name">
+            </div>
+            
+            <div class="form-group">
+                <label for="erpCode">ERP CODE</label>
+                <input type="text" id="erpCode" placeholder="Enter your ERP code">
+            </div>
+            
+            <div class="form-group">
+                <label for="designation">DESIGNATION</label>
+                <input type="text" id="designation" placeholder="Enter your designation">
+            </div>
+            
+            <div class="form-group">
+                <label for="baseLocation">BASE LOCATION</label>
+                <input type="text" id="baseLocation" placeholder="Enter your base location">
+            </div>
+            
+            <div class="form-group">
+                <label for="mobileNo">MOBILE NO.</label>
+                <input type="tel" id="mobileNo" placeholder="Enter your mobile number">
+            </div>
+            
+            <div class="form-group">
+                <label for="approvedBy">APPROVED BY KP (Name)</label>
+                <input type="text" id="approvedBy" placeholder="Enter approver's name">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">EMPLOYEE EMAIL ID</label>
+                <input type="email" id="email" placeholder="Enter your email address">
+            </div>
+            
+            <div class="form-group">
+                <label for="cadre">CADRE</label>
+                <input type="text" id="cadre" placeholder="Enter your cadre">
+            </div>
+            
+            <div class="form-group">
+                <label for="department">DEPARTMENT</label>
+                <input type="text" id="department" placeholder="Enter your department">
+            </div>
+            
+            <div class="form-group">
+                <label for="reportingManager">REPORTING MANAGER NAME</label>
+                <input type="text" id="reportingManager" placeholder="Enter reporting manager's name">
+            </div>
+            
+            <div class="form-group">
+                <label for="reportingManagerEmail">REPORTING MANAGER EMAIL ID</label>
+                <input type="email" id="reportingManagerEmail" placeholder="Enter reporting manager's email">
+            </div>
+            
+            <div class="form-group">
+                <label for="approvalDate">APPROVAL DATE</label>
+                <input type="date" id="approvalDate">
+            </div>
+            
+            <div class="form-group">
+                <label for="claimPeriod">Travel Claim Period</label>
+                <input type="text" id="claimPeriod" placeholder="e.g., 20 May - 20 June 2025">
+            </div>
+            
+            <div class="nav-buttons">
+                <button class="secondary-btn" onclick="showHistory()">
+                    <i class="fas fa-history"></i> View History
+                </button>
+                <button onclick="saveEmployeeDetails()">
+                    Save & Continue <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Page 2: Expense Entry -->
+        <div id="page2" class="page">
+            <div class="profile-card">
+                <div class="profile-name" id="profileName">Maneezh Fastogi</div>
+                <div class="profile-details">
+                    <div class="profile-detail">
+                        <div class="detail-value" id="profileCadre">3</div>
+                        <div class="detail-label">CADRE</div>
+                    </div>
+                    <div class="profile-detail">
+                        <div class="detail-value" id="profileDesignation">AM-CSR</div>
+                        <div class="detail-label">DESIGNATION</div>
+                    </div>
+                </div>
+            </div>
+            
+            <h2>Expense Entry</h2>
+            <p>Enter details of your travel expenses</p>
+            
+            <div class="form-group">
+                <label for="travelDate">Date of Travel</label>
+                <input type="date" id="travelDate">
+            </div>
+            
+            <div class="form-group">
+                <label for="purpose">Purpose of Travel</label>
+                <input type="text" id="purpose" placeholder="Purpose of travel">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="travelFrom">Travel From (City)</label>
+                    <input type="text" id="travelFrom" placeholder="From city">
+                </div>
+                
+                <div class="form-group">
+                    <label for="travelTo">Travel To (City)</label>
+                    <input type="text" id="travelTo" placeholder="To city">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="claimType">Type of Claim</label>
+                <select id="claimType">
+                    <option value="">Select claim type</option>
+                    <option value="accommodation">Accommodation</option>
+                    <option value="food">Food</option>
+                    <option value="travel">Travel</option>
+                    <option value="miscellaneous">Miscellaneous</option>
+                </select>
+            </div>
+            
+            <div class="section-title">Accommodation Details</div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="daysOfStay">Number of days of stay</label>
+                    <input type="number" id="daysOfStay" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="guestHouse">Stay in company Guest House?</label>
+                    <select id="guestHouse">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="hotelCharges">Hotel charges (if self booked)</label>
+                    <input type="number" id="hotelCharges" min="0" placeholder="0.00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="familyPolicy">Claim under Friends & Family policy</label>
+                    <input type="number" id="familyPolicy" min="0" placeholder="0.00">
+                </div>
+            </div>
+            
+            <div class="section-title">Food Expenses</div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="foodWithBills">Food (with bills)</label>
+                    <input type="number" id="foodWithBills" min="0" placeholder="0.00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="foodWithoutBills">Food (without bills)</label>
+                    <input type="number" id="foodWithoutBills" min="0" placeholder="0.00">
+                </div>
+            </div>
+            
+            <div class="section-title">Travel Expenses</div>
+            
+            <div class="form-group">
+                <label for="flightCharges">Flight charges (if self booked)</label>
+                <input type="number" id="flightCharges" min="0" placeholder="0.00">
+            </div>
+            
+            <div class="form-group">
+                <label for="travelMode">Mode of travel</label>
+                <select id="travelMode">
+                    <option value="">Select mode</option>
+                    <option value="cab">Cab</option>
+                    <option value="taxi">Taxi</option>
+                    <option value="auto">Auto</option>
+                    <option value="other">Other mode</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="locationFrom">Location From (Google Landmark)</label>
+                    <input type="text" id="locationFrom" placeholder="Starting point">
+                </div>
+                
+                <div class="form-group">
+                    <label for="locationTo">Location To (Google Landmark)</label>
+                    <input type="text" id="locationTo" placeholder="Destination">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="distance">Distance travelled in KMs (if no invoices)</label>
+                <input type="number" id="distance" min="0" placeholder="Distance in KM">
+            </div>
+            
+            <div class="form-group">
+                <label for="amountSpent">Amount spent</label>
+                <input type="number" id="amountSpent" min="0" placeholder="0.00">
+            </div>
+            
+            <div class="section-title">Miscellaneous</div>
+            
+            <div class="form-group">
+                <label for="miscellaneous">Miscellaneous (INR)</label>
+                <input type="number" id="miscellaneous" min="0" placeholder="0.00">
+            </div>
+            
+            <div class="form-group">
+                <label for="grandTotal">Grand Total (A+B+C+D+E+F+G)</label>
+                <input type="number" id="grandTotal" min="0" placeholder="0.00" readonly>
+            </div>
+            
+            <div class="nav-buttons">
+                <button class="secondary-btn" onclick="showPage('page1')">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button onclick="addExpense()">
+                    <i class="fas fa-plus"></i> Add Expense
+                </button>
+                <button class="success-btn" onclick="generateExcel()">
+                    <i class="fas fa-download"></i> Download Excel
+                </button>
+            </div>
+            
+            <div class="section-title">Current Expenses</div>
+            <div id="expensesList">
+                <!-- Expenses will be listed here -->
+            </div>
+        </div>
+
+        <!-- Page 3: History -->
+        <div id="page3" class="page">
+            <h2>Expense History</h2>
+            <p>Your previous expense claims (data is stored for 30 days)</p>
+            
+            <div class="form-group">
+                <label for="historyFilter">Filter by Date Range</label>
+                <select id="historyFilter" onchange="filterHistory()">
+                    <option value="7">Last 7 days</option>
+                    <option value="14">Last 14 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="all">All time</option>
+                </select>
+            </div>
+            
+            <div id="historyList">
+                <!-- History items will be added here -->
+            </div>
+            
+            <div class="nav-buttons">
+                <button class="secondary-btn" onclick="showPage('page1')">
+                    <i class="fas fa-arrow-left"></i> Back to Main
+                </button>
+                <button onclick="showPage('page2')">
+                    <i class="fas fa-plus"></i> New Expense
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <span id="notificationText"></span>
+    </div>
+
+    <script>
+        // Store employee details and expenses
+        let employeeDetails = {};
+        let expenses = [];
+        let history = [];
+        
+        // Show specified page and hide others
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+            
+            // Update profile info when going to page 2
+            if (pageId === 'page2') {
+                updateProfileInfo();
+                renderExpenses();
+            } else if (pageId === 'page3') {
+                renderHistory();
+            }
+        }
+        
+        // Show history page
+        function showHistory() {
+            showPage('page3');
+        }
+        
+        // Save employee details
+        function saveEmployeeDetails() {
+            // Get all employee details
+            employeeDetails = {
+                name: document.getElementById('employeeName').value,
+                erpCode: document.getElementById('erpCode').value,
+                designation: document.getElementById('designation').value,
+                baseLocation: document.getElementById('baseLocation').value,
+                mobileNo: document.getElementById('mobileNo').value,
+                approvedBy: document.getElementById('approvedBy').value,
+                email: document.getElementById('email').value,
+                cadre: document.getElementById('cadre').value,
+                department: document.getElementById('department').value,
+                reportingManager: document.getElementById('reportingManager').value,
+                reportingManagerEmail: document.getElementById('reportingManagerEmail').value,
+                approvalDate: document.getElementById('approvalDate').value,
+                claimPeriod: document.getElementById('claimPeriod').value,
+                lastUpdated: new Date().toISOString()
+            };
+            
+            // Validate required fields
+            if (!employeeDetails.name || !employeeDetails.erpCode || !employeeDetails.designation) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Save to localStorage with timestamp
+            localStorage.setItem('employeeDetails', JSON.stringify(employeeDetails));
+            
+            // Move to next page
+            showPage('page2');
+        }
+        
+        // Update profile information from saved details
+        function updateProfileInfo() {
+            // Try to load from localStorage if available
+            const savedDetails = localStorage.getItem('employeeDetails');
+            if (savedDetails) {
+                employeeDetails = JSON.parse(savedDetails);
+                
+                // Populate form fields
+                document.getElementById('employeeName').value = employeeDetails.name || '';
+                document.getElementById('erpCode').value = employeeDetails.erpCode || '';
+                document.getElementById('designation').value = employeeDetails.designation || '';
+                document.getElementById('baseLocation').value = employeeDetails.baseLocation || '';
+                document.getElementById('mobileNo').value = employeeDetails.mobileNo || '';
+                document.getElementById('approvedBy').value = employeeDetails.approvedBy || '';
+                document.getElementById('email').value = employeeDetails.email || '';
+                document.getElementById('cadre').value = employeeDetails.cadre || '';
+                document.getElementById('department').value = employeeDetails.department || '';
+                document.getElementById('reportingManager').value = employeeDetails.reportingManager || '';
+                document.getElementById('reportingManagerEmail').value = employeeDetails.reportingManagerEmail || '';
+                document.getElementById('approvalDate').value = employeeDetails.approvalDate || '';
+                document.getElementById('claimPeriod').value = employeeDetails.claimPeriod || '';
+            }
+            
+            // Update profile card
+            document.getElementById('profileName').textContent = employeeDetails.name || 'Maneezh Fastogi';
+            document.getElementById('profileCadre').textContent = employeeDetails.cadre || '3';
+            document.getElementById('profileDesignation').textContent = employeeDetails.designation || 'AM-CSR';
+        }
+        
+        // Add a new expense to the list
+        function addExpense() {
+            const travelDate = document.getElementById('travelDate').value;
+            const purpose = document.getElementById('purpose').value;
+            const amount = document.getElementById('grandTotal').value;
+            
+            if (!travelDate || !purpose || !amount || amount == '0.00') {
+                alert('Please fill in all required fields and ensure total amount is greater than 0');
+                return;
+            }
+            
+            const expense = {
+                date: travelDate,
+                purpose: purpose,
+                travelFrom: document.getElementById('travelFrom').value,
+                travelTo: document.getElementById('travelTo').value,
+                claimType: document.getElementById('claimType').value,
+                daysOfStay: document.getElementById('daysOfStay').value,
+                guestHouse: document.getElementById('guestHouse').value,
+                hotelCharges: document.getElementById('hotelCharges').value,
+                familyPolicy: document.getElementById('familyPolicy').value,
+                foodWithBills: document.getElementById('foodWithBills').value,
+                foodWithoutBills: document.getElementById('foodWithoutBills').value,
+                flightCharges: document.getElementById('flightCharges').value,
+                travelMode: document.getElementById('travelMode').value,
+                locationFrom: document.getElementById('locationFrom').value,
+                locationTo: document.getElementById('locationTo').value,
+                distance: document.getElementById('distance').value,
+                amountSpent: document.getElementById('amountSpent').value,
+                miscellaneous: document.getElementById('miscellaneous').value,
+                amount: amount,
+                entryDate: new Date().toISOString()
+            };
+            
+            expenses.push(expense);
+            renderExpenses();
+            clearExpenseForm();
+            
+            showNotification('Expense added successfully!');
+        }
+        
+        // Render the list of expenses
+        function renderExpenses() {
+            const expensesList = document.getElementById('expensesList');
+            expensesList.innerHTML = '';
+            
+            if (expenses.length === 0) {
+                expensesList.innerHTML = '<p>No expenses added yet</p>';
+                return;
+            }
+            
+            expenses.forEach((expense, index) => {
+                const expenseElement = document.createElement('div');
+                expenseElement.className = 'history-item';
+                expenseElement.innerHTML = `
+                    <div class="history-date">${formatDate(expense.date)}</div>
+                    <div class="history-purpose">${expense.purpose}</div>
+                    <div class="history-amount">From: ${expense.travelFrom} | To: ${expense.travelTo}</div>
+                    <div class="history-amount">Total: ₹${parseFloat(expense.amount).toLocaleString('en-IN')}</div>
+                `;
+                expensesList.appendChild(expenseElement);
+            });
+        }
+        
+        // Render history items with filtering
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            
+            const savedHistory = localStorage.getItem('expenseHistory');
+            if (!savedHistory || JSON.parse(savedHistory).length === 0) {
+                historyList.innerHTML = '<p>No history available</p>';
+                return;
+            }
+            
+            history = JSON.parse(savedHistory);
+            
+            // Filter based on selection
+            const filterDays = document.getElementById('historyFilter').value;
+            const now = new Date();
+            let filteredHistory = history;
+            
+            if (filterDays !== 'all') {
+                const days = parseInt(filterDays);
+                filteredHistory = history.filter(item => {
+                    const itemDate = new Date(item.date);
+                    const diffTime = Math.abs(now - itemDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays <= days;
+                });
+            }
+            
+            if (filteredHistory.length === 0) {
+                historyList.innerHTML = '<p>No history found for selected period</p>';
+                return;
+            }
+            
+            filteredHistory.forEach((item, index) => {
+                const historyElement = document.createElement('div');
+                historyElement.className = 'history-item';
+                historyElement.innerHTML = `
+                    <div class="history-date">${formatDate(item.date)} - ${item.claimPeriod}</div>
+                    <div class="history-purpose">${item.employeeName} - ${item.designation}</div>
+                    <div class="history-amount">Total: ₹${parseFloat(item.totalAmount).toLocaleString('en-IN')}</div>
+                    <div class="history-amount">Entries: ${item.expenses.length} expense items</div>
+                    <button onclick="viewHistoryItem(${index})">View Details</button>
+                    <button class="secondary-btn" onclick="reuseHistoryItem(${index})">Reuse This</button>
+                `;
+                historyList.appendChild(historyElement);
+            });
+        }
+        
+        // Filter history based on selection
+        function filterHistory() {
+            renderHistory();
+        }
+        
+        // View history item details
+        function viewHistoryItem(index) {
+            const item = history[index];
+            let details = `Date: ${formatDate(item.date)}\n`;
+            details += `Employee: ${item.employeeName}\n`;
+            details += `Designation: ${item.designation}\n`;
+            details += `Claim Period: ${item.claimPeriod}\n`;
+            details += `Total Amount: ₹${parseFloat(item.totalAmount).toLocaleString('en-IN')}\n`;
+            details += `Number of Expenses: ${item.expenses.length}\n\n`;
+            
+            item.expenses.forEach((expense, i) => {
+                details += `Expense ${i+1}: ${formatDate(expense.date)} - ${expense.purpose}\n`;
+                details += `Amount: ₹${parseFloat(expense.amount).toLocaleString('en-IN')}\n`;
+                details += `From: ${expense.travelFrom} To: ${expense.travelTo}\n\n`;
+            });
+            
+            alert(details);
+        }
+        
+        // Reuse a history item
+        function reuseHistoryItem(index) {
+            const item = history[index];
+            
+            // Populate employee details
+            document.getElementById('employeeName').value = item.employeeName || '';
+            document.getElementById('erpCode').value = item.erpCode || '';
+            document.getElementById('designation').value = item.designation || '';
+            document.getElementById('baseLocation').value = item.baseLocation || '';
+            document.getElementById('claimPeriod').value = item.claimPeriod || '';
+            
+            // Go to expense page
+            showPage('page2');
+            
+            showNotification('Employee details populated from history. Now add new expenses.');
+        }
+        
+        // Format date for display
+        function formatDate(dateString) {
+            if (!dateString) return 'No date';
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-IN', options);
+        }
+        
+        // Clear the expense form
+        function clearExpenseForm() {
+            document.getElementById('travelDate').value = '';
+            document.getElementById('purpose').value = '';
+            document.getElementById('travelFrom').value = '';
+            document.getElementById('travelTo').value = '';
+            document.getElementById('claimType').value = '';
+            document.getElementById('daysOfStay').value = '';
+            document.getElementById('guestHouse').value = 'no';
+            document.getElementById('hotelCharges').value = '';
+            document.getElementById('familyPolicy').value = '';
+            document.getElementById('foodWithBills').value = '';
+            document.getElementById('foodWithoutBills').value = '';
+            document.getElementById('flightCharges').value = '';
+            document.getElementById('travelMode').value = '';
+            document.getElementById('locationFrom').value = '';
+            document.getElementById('locationTo').value = '';
+            document.getElementById('distance').value = '';
+            document.getElementById('amountSpent').value = '';
+            document.getElementById('miscellaneous').value = '';
+            document.getElementById('grandTotal').value = '';
+        }
+        
+        // Generate and download Excel file
+        function generateExcel() {
+            if (expenses.length === 0) {
+                alert('No expenses to export');
+                return;
+            }
+            
+            // Prepare data for Excel in the format matching the image
+            const excelData = [
+                // Header row
+                ['TRAVEL REIMBURSEMENT CLAIM FORM'],
+                [''],
+                ['Travel Claim Period / Month:', employeeDetails.claimPeriod || ''],
+                [''],
+                ['EMPLOYEE NAME', employeeDetails.name, 'EMPLOYEE EMAIL', employeeDetails.email],
+                ['ERP CODE', employeeDetails.erpCode, 'CADRE', employeeDetails.cadre],
+                ['DESIGNATION', employeeDetails.designation, 'DEPARTMENT', employeeDetails.department],
+                ['BASE LOCATION', employeeDetails.baseLocation, 'REPORTING MANAGER', employeeDetails.reportingManager],
+                ['MOBILE NO.', employeeDetails.mobileNo, 'REPORTING MANAGER EMAIL', employeeDetails.reportingManagerEmail],
+                ['APPROVED BY KP (Name)', employeeDetails.approvedBy, 'APPROVAL DATE', employeeDetails.approvalDate],
+                [''],
+                // Table header
+                ['Date of Travel', 'Purpose of Travel', 'Travel From', 'Travel To', 'Type of Claim', 'Days of Stay', 'Guest House', 'Hotel Charges', 'Family Policy', 'Food with Bills', 'Food without Bills', 'Flight Charges', 'Travel Mode', 'Location From', 'Location To', 'Distance (KM)', 'Amount Spent', 'Miscellaneous', 'Grand Total']
+            ];
+            
+            // Add expense rows
+            expenses.forEach(expense => {
+                excelData.push([
+                    expense.date,
+                    expense.purpose,
+                    expense.travelFrom,
+                    expense.travelTo,
+                    expense.claimType,
+                    expense.daysOfStay,
+                    expense.guestHouse,
+                    expense.hotelCharges,
+                    expense.familyPolicy,
+                    expense.foodWithBills,
+                    expense.foodWithoutBills,
+                    expense.flightCharges,
+                    expense.travelMode,
+                    expense.locationFrom,
+                    expense.locationTo,
+                    expense.distance,
+                    expense.amountSpent,
+                    expense.miscellaneous,
+                    expense.amount
+                ]);
+            });
+            
+            // Add total row
+            const totalAmount = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount || 0), 0);
+            excelData.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Total:', totalAmount.toFixed(2)]);
+            
+            // Create worksheet
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Travel Expenses');
+            
+            // Generate Excel file and trigger download
+            XLSX.writeFile(wb, 'travel_expenses.xlsx');
+            
+            // Save to history
+            saveToHistory(totalAmount);
+            
+            // Clear current expenses
+            expenses = [];
+            renderExpenses();
+            
+            showNotification('Excel file downloaded successfully! Data saved for 30 days.');
+        }
+        
+        // Save current claim to history with automatic 30-day cleanup
+        function saveToHistory(totalAmount) {
+            const historyItem = {
+                date: new Date().toISOString().split('T')[0],
+                claimPeriod: employeeDetails.claimPeriod,
+                employeeName: employeeDetails.name,
+                erpCode: employeeDetails.erpCode,
+                designation: employeeDetails.designation,
+                totalAmount: totalAmount,
+                expenses: [...expenses],
+                saveDate: new Date().toISOString()
+            };
+            
+            // Get existing history
+            const savedHistory = localStorage.getItem('expenseHistory');
+            let history = savedHistory ? JSON.parse(savedHistory) : [];
+            
+            // Add new item
+            history.push(historyItem);
+            
+            // Clean up old items (older than 30 days)
+            const now = new Date();
+            history = history.filter(item => {
+                const itemDate = new Date(item.saveDate);
+                const diffTime = Math.abs(now - itemDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays <= 30;
+            });
+            
+            // Save back to localStorage
+            localStorage.setItem('expenseHistory', JSON.stringify(history));
+            
+            // Update employee details timestamp
+            employeeDetails.lastUpdated = new Date().toISOString();
+            localStorage.setItem('employeeDetails', JSON.stringify(employeeDetails));
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Calculate grand total when any amount field changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const amountFields = [
+                'hotelCharges', 'familyPolicy', 'foodWithBills', 
+                'foodWithoutBills', 'flightCharges', 'amountSpent', 
+                'miscellaneous'
+            ];
+            
+            amountFields.forEach(field => {
+                document.getElementById(field).addEventListener('input', calculateTotal);
+            });
+            
+            // Set today's date as default for travel date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('travelDate').value = today;
+        });
+        
+        // Calculate the grand total
+        function calculateTotal() {
+            const hotelCharges = parseFloat(document.getElementById('hotelCharges').value) || 0;
+            const familyPolicy = parseFloat(document.getElementById('familyPolicy').value) || 0;
+            const foodWithBills = parseFloat(document.getElementById('foodWithBills').value) || 0;
+            const foodWithoutBills = parseFloat(document.getElementById('foodWithoutBills').value) || 0;
+            const flightCharges = parseFloat(document.getElementById('flightCharges').value) || 0;
+            const amountSpent = parseFloat(document.getElementById('amountSpent').value) || 0;
+            const miscellaneous = parseFloat(document.getElementById('miscellaneous').value) || 0;
+            
+            const total = hotelCharges + familyPolicy + foodWithBills + 
+                         foodWithoutBills + flightCharges + amountSpent + miscellaneous;
+            
+            document.getElementById('grandTotal').value = total.toFixed(2);
+        }
+        
+        // Initialize the app
+        window.onload = function() {
+            // Try to load saved employee details
+            const savedDetails = localStorage.getItem('employeeDetails');
+            if (savedDetails) {
+                employeeDetails = JSON.parse(savedDetails);
+                
+                // Check if data is older than 30 days
+                if (employeeDetails.lastUpdated) {
+                    const lastUpdated = new Date(employeeDetails.lastUpdated);
+                    const now = new Date();
+                    const diffTime = Math.abs(now - lastUpdated);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 30) {
+                        if (confirm('Your saved data is older than 30 days. Would you like to clear it?')) {
+                            localStorage.removeItem('employeeDetails');
+                            localStorage.removeItem('expenseHistory');
+                            employeeDetails = {};
+                        }
+                    }
+                }
+                
+                updateProfileInfo();
+            }
+            
+            renderExpenses();
+        };
+    </script>
+</body>
+</html>
